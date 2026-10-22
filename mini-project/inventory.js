@@ -9,23 +9,29 @@
     { name: "Mouse", price: 25 },
   ];
 
+  // ---- Dynamic price thresholds (change these to re-categorise everything) ----
+  const thresholds = { budget: 50, premium: 500 };
+
   // ---- Functions & scope ----
   function getCategory(price) {            // switch(true) assigns badges by price
     switch (true) {
-      case price < 50:
+      case price < thresholds.budget:
         return "Budget";
-      case price < 500:
+      case price < thresholds.premium:
         return "Standard";
       default:
         return "Premium";
     }
   }
 
-  function findProduct(list, name) {       // loop + early exit
+  function findProduct(list, name) {       // loop with continue + break
+    let found = null;
     for (let i = 0; i < list.length; i++) {
-      if (list[i].name.toLowerCase() === name.toLowerCase()) return list[i];
+      if (list[i].name.toLowerCase() !== name.toLowerCase()) continue; // not a match, next item
+      found = list[i];
+      break; // match found, stop searching
     }
-    return null;
+    return found;
   }
 
   function calculateTotal(list) {
