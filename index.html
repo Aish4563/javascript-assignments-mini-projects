@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JavaScript Assignments & Inventory Dashboard</title>
+<style>
+  :root { --bg:#14181f; --panel:#1d232d; --line:#2e3744; --text:#e8ecf1; --muted:#97a3b3; --accent:#f7c948; --ok:#7bd88f; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f3f1ec; --panel:#fff; --line:#d9d4c8; --text:#1d232d; --muted:#5d6675; --accent:#b8860b; --ok:#2d7a3e; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 "Segoe UI", system-ui, sans-serif; }
+  header { padding:56px 24px 28px; max-width:1100px; margin:0 auto; }
+  h1 { font:700 clamp(2rem,5vw,3.4rem)/1.1 Georgia, "Times New Roman", serif; margin:0 0 12px; }
+  header p { color:var(--muted); max-width:62ch; margin:0 0 20px; }
+  .bar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; }
+  label { color:var(--muted); display:flex; gap:8px; align-items:center; cursor:pointer; }
+  main { max-width:1100px; margin:0 auto; padding:0 24px 64px; display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr)); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; display:flex; flex-direction:column; gap:12px; }
+  .card.project { grid-column:1/-1; border-color:var(--accent); }
+  h2 { font-size:1.15rem; margin:0; }
+  .card p { margin:0; color:var(--muted); font-size:.93rem; }
+  button { font:inherit; font-weight:600; cursor:pointer; border-radius:6px; padding:8px 16px; border:1px solid var(--accent); background:var(--accent); color:#14181f; align-self:flex-start; }
+  button.ghost { background:transparent; color:var(--text); border-color:var(--line); }
+  button:focus-visible { outline:3px solid var(--ok); outline-offset:2px; }
+  pre { margin:0; background:#0e1116; color:#d6f5dc; border-radius:6px; padding:14px; min-height:90px; overflow-x:auto; font:13px/1.55 Consolas, "Courier New", monospace; white-space:pre-wrap; }
+  pre:empty::before { content:"Output appears here after you press Run."; color:#6b7788; }
+</style>
+</head>
+<body>
+<header>
+  <h1>JavaScript Assignments &amp; Inventory Dashboard</h1>
+  <p>Six assignments and one capstone project. Press Run on any card to execute its script and see the console output right here.</p>
+  <div class="bar">
+    <button id="runAll">Run everything</button>
+    <label><input type="checkbox" id="usePrompts" checked> Ask me for input with prompt() pop-ups</label>
+  </div>
+</header>
+<main id="grid"></main>
+
+<script>
+const items = [
+  ["assignments/01-variables-datatypes.js", "Assignment 1: Variables and data types", "var, let, const and typeof."],
+  ["assignments/02-operators-input.js", "Assignment 2: Operators and input", "Tip calculator using prompt(), Number() and arithmetic operators."],
+  ["assignments/03-conditionals.js", "Assignment 3: Conditional logic", "if...else, switch and the ternary operator on a test score."],
+  ["assignments/04-loops.js", "Assignment 4: Loops", "for, while with break, and do...while with continue."],
+  ["assignments/05-functions-scope.js", "Assignment 5: Functions and scope", "Standard and arrow functions, default parameters, block scope."],
+  ["assignments/06-arrays-objects.js", "Assignment 6: Arrays and objects", "forEach, filter and map on a product list."],
+  ["mini-project/inventory.js", "Capstone: Product inventory and analytics", "Add a product with prompt(), categorise it, then report totals, filters and a tax/discount bonus.", true]
+];
+const nativePrompt = window.prompt.bind(window);
+window.prompt = (m, d) => document.getElementById("usePrompts").checked ? nativePrompt(m, d) : d;
+const fmt = (v) => typeof v === "string" ? v : (typeof v === "object" && v !== null ? JSON.stringify(v) : String(v));
+
+function run(file, out) {
+  return new Promise((resolve) => {
+    out.textContent = "";
+    const original = console.log;
+    console.log = (...a) => { out.textContent += a.map(fmt).join(" ") + "\n"; };
+    const s = document.createElement("script");
+    const done = () => { console.log = original; s.remove(); resolve(); };
+    s.onload = done;
+    s.onerror = () => { out.textContent = "Could not load " + file; done(); };
+    s.src = file + "?t=" + Date.now();
+    document.body.appendChild(s);
+  });
+}
+
+const grid = document.getElementById("grid");
+const runners = items.map(([file, title, desc, project]) => {
+  const card = document.createElement("section");
+  card.className = "card" + (project ? " project" : "");
+  card.innerHTML = `<h2>${title}</h2><p>${desc}</p><button>Run</button><pre aria-live="polite"></pre>`;
+  const out = card.querySelector("pre");
+  const go = () => run(file, out);
+  card.querySelector("button").onclick = go;
+  grid.appendChild(card);
+  return go;
+});
+document.getElementById("runAll").onclick = async () => { for (const go of runners) await go(); };
+</script>
+</body>
+</html>
